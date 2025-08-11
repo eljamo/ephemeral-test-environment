@@ -48,9 +48,18 @@ spec:
                   value: "{{workflow.parameters.deployment-name}}"
                 - name: path-vcluster
                   value: "{{workflow.parameters.path-vcluster}}"
+          - name: configure-deployment
+            template: tmpl-configure-deploy
+            depends: "clone-repo && create-vcluster"
+            arguments:
+              parameters:
+                - name: name
+                  value: "{{workflow.parameters.deployment-name}}"
+                - name: path-kustomize
+                  value: "{{workflow.parameters.path-kustomize}}"
           - name: deploy-application
             template: tmpl-deploy
-            depends: "clone-repo && create-vcluster"
+            depends: "clone-repo && create-vcluster && configure-deployment"
             arguments:
               parameters:
                 - name: name
@@ -109,6 +118,24 @@ spec:
           - --namespace
           - "{{workflow.parameters.deployment-name}}"
           - --connect=false
+    - name: tmpl-configure-deploy
+      inputs:
+        parameters:
+          - name: name
+          - name: path-kustomize
+      container:
+        image: registry.k8s.io/kustomize/kustomize:v5.0.0
+        volumeMounts:
+          - mountPath: /work
+            name: work
+        workingDir: /work/{{inputs.parameters.path-kustomize}}
+        command:
+          - sh
+        args:
+          - -c
+          - |
+            # Create or update the configmap with DEPLOYMENT_NAME
+            kustomize edit set configmap deployment-config --from-literal=DEPLOYMENT_NAME="{{inputs.parameters.name}}"
     - name: tmpl-deploy
       inputs:
         parameters:
@@ -133,4 +160,4 @@ spec:
           - -c
           - |
             kubectl create namespace "{{inputs.parameters.name}}"
-            kubectl kustomize --env DEPLOYMENT_NAME="{{workflow.parameters.deployment-name}}" ./ | kubectl apply -f - --namespace "{{workflow.parameters.deployment-name}}"
+            kubectl kustomize ./ | kubectl apply -f - --namespace "{{workflow.parameters.deployment-name}}"

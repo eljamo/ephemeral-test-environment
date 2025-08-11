@@ -5,6 +5,12 @@ kind: Kustomization
 resources:
   - ../../../base/mempass
 
+# ConfigMap for deployment variables
+configMapGenerator:
+  - name: deployment-config
+    literals:
+      - DEPLOYMENT_NAME=placeholder
+
 # Patch the image tag
 images:
   - name: ghcr.io/eljamo/mempass-api
@@ -20,3 +26,27 @@ patches:
     target:
       kind: Namespace
       name: mempass
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: deployment-config
+      fieldPath: data.DEPLOYMENT_NAME
+    targets:
+      - select:
+          kind: Namespace
+        fieldPaths:
+          - metadata.name
+  - source:
+      kind: ConfigMap
+      name: deployment-config
+      fieldPath: data.DEPLOYMENT_NAME
+    targets:
+      - select:
+          kind: Ingress
+          name: mempass-ingress
+        fieldPaths:
+          - spec.rules.0.host
+        options:
+          delimiter: .
+          index: 1
