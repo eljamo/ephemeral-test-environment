@@ -11,10 +11,12 @@ spec:
         value: main
       - name: path-chart
         value: helm/mempass
+      - name: vcluster-path
+        value: vcluster
       - name: image
         value: ghcr.io/eljamo/mempass:latest
-      - name: vcluster-name
-        value: demo-deploy
+      - name: deployment-name
+        value: deployment-name
   entrypoint: main
   # We use a volume claim template so that we can have a shared workspace.
   volumeClaimTemplates:
@@ -39,21 +41,22 @@ spec:
                   value: "{{workflow.parameters.branch}}"
           - name: create-vcluster
             template: tmpl-vcluster
+            depends: "clone-repo"
             arguments:
               parameters:
                 - name: name
-                  value: "{{workflow.parameters.vcluster-name}}"
+                  value: "{{workflow.parameters.deployment-name}}"
           - name: install-helm-chart
             template: tmpl-deploy
+            depends: "clone-repo && create-vcluster"
             arguments:
               parameters:
                 - name: name
-                  value: "{{workflow.parameters.vcluster-name}}"
+                  value: "{{workflow.parameters.deployment-name}}"
                 - name: path-chart
                   value: "{{workflow.parameters.path-chart}}"
                 - name: image
                   value: "{{workflow.parameters.image}}"
-            depends: "clone-repo && create-vcluster"
     - name: tmpl-clone
       inputs:
         parameters:
@@ -89,13 +92,19 @@ spec:
           - name: name
       container:
         image: ghcr.io/loft-sh/vcluster-cli:0.23
+        volumeMounts:
+          - mountPath: /work
+            name: work
+        workingDir: /work/{{inputs.parameters.vcluster-conf-path}}
         command:
           - vcluster
         args:
           - create
           - "{{inputs.parameters.name}}"
+          - --values
+          - ./values.yaml
           - --namespace
-          - "{{workflow.parameters.vcluster-name}}"
+          - "{{workflow.parameters.deployment-name}}"
           - --connect=false
     - name: tmpl-deploy
       inputs:
@@ -104,10 +113,10 @@ spec:
           - name: path-chart
           - name: image
       container:
+        image: ghcr.io/loft-sh/vcluster-cli:0.23
         volumeMounts:
           - mountPath: /work
             name: work
-        image: ghcr.io/loft-sh/vcluster-cli:0.23
         workingDir: /work/{{inputs.parameters.path-chart}}
         command:
           - vcluster
@@ -115,7 +124,7 @@ spec:
           - connect
           - "{{inputs.parameters.name}}"
           - --namespace
-          - "{{workflow.parameters.vcluster-name}}"
+          - "{{workflow.parameters.deployment-name}}"
           - --
           - helm
           - upgrade

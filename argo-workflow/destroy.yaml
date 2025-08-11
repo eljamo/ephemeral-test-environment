@@ -5,8 +5,8 @@ metadata:
 spec:
   arguments:
     parameters:
-      - name: vcluster-name
-        value: demo-deploy
+      - name: deployment-name
+        value: deployment-name
   entrypoint: main
   templates:
     - name: main
@@ -17,14 +17,7 @@ spec:
             arguments:
               parameters:
                 - name: name
-                  value: "{{workflow.parameters.vcluster-name}}"
-          - name: delete-namespace
-            template: tmpl-delete-namespace
-            arguments:
-              parameters:
-                - name: name
-                  value: "{{workflow.parameters.vcluster-name}}"
-            depends: "delete-vcluster"
+                  value: "{{workflow.parameters.deployment-name}}"
     - name: tmpl-delete-vcluster
       inputs:
         parameters:
@@ -37,6 +30,6 @@ spec:
           - delete
           - "{{inputs.parameters.name}}"
           - --namespace
-          - "{{workflow.parameters.vcluster-name}}"
+          - "{{workflow.parameters.deployment-name}}"
           - --auto-delete-namespace
           - --delete-namespace

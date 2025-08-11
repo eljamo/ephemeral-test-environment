@@ -1,0 +1,22 @@
+controlPlane:
+  statefulSet:
+    image:
+      repository: "loft-sh/vcluster-oss"
+
+telemetry:
+  enabled: false
+
+policies:
+  podSecurityStandard: "baseline"
+  limitRange:
+    enabled: true
+  resourceQuota:
+    enabled: true
+
+sync:
+  toHost:
+    ingresses:
+      enabled: true
+  fromHost:
+    ingressClasses:
+      enabled: true
