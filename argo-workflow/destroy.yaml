@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: destroy
+spec:
+  arguments:
+    parameters:
+      - name: vcluster-name
+        value: demo-deploy
+  entrypoint: main
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: delete-vcluster
+            template: tmpl-delete-vcluster
+            arguments:
+              parameters:
+                - name: name
+                  value: "{{workflow.parameters.vcluster-name}}"
+          - name: delete-namespace
+            template: tmpl-delete-namespace
+            arguments:
+              parameters:
+                - name: name
+                  value: "{{workflow.parameters.vcluster-name}}"
+            depends: "delete-vcluster"
+    - name: tmpl-delete-vcluster
+      inputs:
+        parameters:
+          - name: name
+      container:
+        image: ghcr.io/loft-sh/vcluster-cli:0.19
+        command:
+          - vcluster
+        args:
+          - delete
+          - "{{inputs.parameters.name}}"
+          - --namespace
+          - "{{workflow.parameters.vcluster-name}}"
+          - --auto-delete-namespace
+          - --delete-namespace
