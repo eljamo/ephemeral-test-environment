@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: deploy
+  name: kustomize-deploy
 spec:
   arguments:
     parameters:
@@ -9,8 +9,6 @@ spec:
         value: eljamo/ephemeral-test-environment.git
       - name: branch
         value: main
-      - name: path-chart
-        value: helm/mempass
       - name: path-kustomize
         value: kustomize/templates/overlays/vcluster
       - name: path-vcluster
