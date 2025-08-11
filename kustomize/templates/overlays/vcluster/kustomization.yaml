@@ -3,50 +3,50 @@ kind: Kustomization
 
 # Reference the base configuration
 resources:
-  - ../../../base/mempass
+- ../../../base/mempass
 
 # ConfigMap for deployment variables
 configMapGenerator:
-  - name: deployment-config
-    literals:
-      - DEPLOYMENT_NAME=placeholder
+- literals:
+  - DEPLOYMENT_NAME=bitch
+  name: deployment-config
 
 # Patch the image tag
 images:
-  - name: ghcr.io/eljamo/mempass-api
-    newTag: latest
+- name: ghcr.io/eljamo/mempass-api
+  newTag: latest
 
 # Patch the ingress host
 patches:
-  - path: ingress-host-patch.yaml
-    target:
-      kind: Ingress
-      name: mempass-ingress
-  - path: namespace-patch.yaml
-    target:
-      kind: Namespace
-      name: mempass
+- path: ingress-host-patch.yaml
+  target:
+    kind: Ingress
+    name: mempass-ingress
+- path: namespace-patch.yaml
+  target:
+    kind: Namespace
+    name: mempass
 
 replacements:
-  - source:
-      kind: ConfigMap
-      name: deployment-config
-      fieldPath: data.DEPLOYMENT_NAME
-    targets:
-      - select:
-          kind: Namespace
-        fieldPaths:
-          - metadata.name
-  - source:
-      kind: ConfigMap
-      name: deployment-config
-      fieldPath: data.DEPLOYMENT_NAME
-    targets:
-      - select:
-          kind: Ingress
-          name: mempass-ingress
-        fieldPaths:
-          - spec.rules.0.host
-        options:
-          delimiter: .
-          index: 1
+- source:
+    fieldPath: data.DEPLOYMENT_NAME
+    kind: ConfigMap
+    name: deployment-config
+  targets:
+  - fieldPaths:
+    - metadata.name
+    select:
+      kind: Namespace
+- source:
+    fieldPath: data.DEPLOYMENT_NAME
+    kind: ConfigMap
+    name: deployment-config
+  targets:
+  - fieldPaths:
+    - spec.rules.0.host
+    options:
+      delimiter: .
+      index: 1
+    select:
+      kind: Ingress
+      name: mempass-ingress
