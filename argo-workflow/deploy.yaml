@@ -134,6 +134,8 @@ spec:
           - --install
           - "{{inputs.parameters.name}}"
           - ./ # never change this to just a . it doesn't work
+          - --set
+          - ingress.hosts[0].host=mempass.{{workflow.parameters.deployment-name}}.ephemeralclusters.com
           - --namespace
           - "{{inputs.parameters.name}}"
           - --create-namespace
