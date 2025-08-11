@@ -12,4 +12,7 @@ images:
 
 # Patch the ingress host
 patches:
-  - ingress-host-patch.yaml
+  - path: ingress-host-patch.yaml
+    target:
+      kind: Ingress
+      name: mempass-ingress
