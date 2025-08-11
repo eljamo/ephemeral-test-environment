@@ -90,6 +90,7 @@ spec:
       inputs:
         parameters:
           - name: name
+          - name: vcluster-path
       container:
         image: ghcr.io/loft-sh/vcluster-cli:0.23
         volumeMounts:
