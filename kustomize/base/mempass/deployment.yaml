@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mempass
+  namespace: mempass
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mempass
+  template:
+    metadata:
+      labels:
+        app: mempass
+    spec:
+      containers:
+        - name: mempass-api
+          image: ghcr.io/eljamo/mempass-api:latest
+          ports:
+            - containerPort: 4321

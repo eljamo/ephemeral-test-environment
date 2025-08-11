@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Reference the base configuration
+resources:
+  - ../../../base/mempass
+
+# Patch the image tag
+images:
+  - name: ghcr.io/eljamo/mempass-api
+    newTag: latest
+
+# Patch the ingress host
+patchesStrategicMerge:
+  - ingress-host-patch.yaml

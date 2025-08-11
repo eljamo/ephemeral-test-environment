@@ -1,0 +1,138 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: deploy
+spec:
+  arguments:
+    parameters:
+      - name: repo
+        value: eljamo/ephemeral-test-environment.git
+      - name: branch
+        value: main
+      - name: path-chart
+        value: helm/mempass
+      - name: path-kustomize
+        value: kustomize/templates/overlays/vcluster
+      - name: path-vcluster
+        value: vcluster
+      - name: image
+        value: ghcr.io/eljamo/mempass:latest
+      - name: deployment-name
+        value: deployment-name
+  entrypoint: main
+  # We use a volume claim template so that we can have a shared workspace.
+  volumeClaimTemplates:
+    - metadata:
+        name: work
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 64Mi
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: clone-repo
+            template: tmpl-clone
+            arguments:
+              parameters:
+                - name: repo
+                  value: "{{workflow.parameters.repo}}"
+                - name: branch
+                  value: "{{workflow.parameters.branch}}"
+          - name: create-vcluster
+            template: tmpl-vcluster
+            depends: "clone-repo"
+            arguments:
+              parameters:
+                - name: name
+                  value: "{{workflow.parameters.deployment-name}}"
+                - name: path-vcluster
+                  value: "{{workflow.parameters.path-vcluster}}"
+          - name: deploy-application
+            template: tmpl-deploy
+            depends: "clone-repo && create-vcluster"
+            arguments:
+              parameters:
+                - name: name
+                  value: "{{workflow.parameters.deployment-name}}"
+                - name: path-kustomize
+                  value: "{{workflow.parameters.path-kustomize}}"
+                - name: image
+                  value: "{{workflow.parameters.image}}"
+    - name: tmpl-clone
+      inputs:
+        parameters:
+          - name: repo
+          - name: branch
+      container:
+        image: alpine/git:v2.26.2
+        workingDir: /work
+        env:
+          - name: BUILDKITD_FLAGS
+            value: --oci-worker-no-process-sandbox
+          - name: GH_TOKEN # name of env var
+            valueFrom:
+              secretKeyRef:
+                name: github-token # name of an existing k8s secret
+                namespace: argo
+                key: token
+        args:
+          - clone
+          - --depth
+          - "1"
+          - --branch
+          - "{{inputs.parameters.branch}}"
+          - --single-branch
+          - "https://workflow:$(GH_TOKEN)@github.com/{{inputs.parameters.repo}}"
+          - ./ # never change this to just a . it doesn't work
+        volumeMounts:
+          - name: work
+            mountPath: /work
+    - name: tmpl-vcluster
+      inputs:
+        parameters:
+          - name: name
+          - name: path-vcluster
+      container:
+        image: ghcr.io/loft-sh/vcluster-cli:0.23
+        volumeMounts:
+          - mountPath: /work
+            name: work
+        workingDir: /work/{{inputs.parameters.path-vcluster}}
+        command:
+          - vcluster
+        args:
+          - create
+          - "{{inputs.parameters.name}}"
+          - --values
+          - ./values.yaml
+          - --namespace
+          - "{{workflow.parameters.deployment-name}}"
+          - --connect=false
+    - name: tmpl-deploy
+      inputs:
+        parameters:
+          - name: name
+          - name: path-kustomize
+          - name: image
+      container:
+        image: ghcr.io/loft-sh/vcluster-cli:0.23
+        volumeMounts:
+          - mountPath: /work
+            name: work
+        workingDir: /work/{{inputs.parameters.path-kustomize}}
+        command:
+          - vcluster
+        args:
+          - connect
+          - "{{inputs.parameters.name}}"
+          - --namespace
+          - "{{workflow.parameters.deployment-name}}"
+          - --
+          - export DEPLOYMENT_NAME="{{workflow.parameters.deployment-name}}"
+          - kustomize build ./ | envsubst | kubectl apply -f -
+          - --namespace
+          - "{{inputs.parameters.name}}"
+          - --create-namespace

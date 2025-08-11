@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mempass-ingress
+  namespace: mempass
+spec:
+  rules:
+    - host: mempass.${DEPLOYMENT_NAME}.ephemeralclusters.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mempass
+                port:
+                  number: 80
