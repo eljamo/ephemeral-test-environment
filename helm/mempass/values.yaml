@@ -52,6 +52,9 @@ ingress:
       paths:
         - path: /
           pathType: ImplementationSpecific
+          backend:
+            serviceName: mempass
+            servicePort: 4321
   tls: []
 
 resources:
