@@ -16,3 +16,7 @@ patches:
     target:
       kind: Ingress
       name: mempass-ingress
+  - path: namespace-patch.yaml
+    target:
+      kind: Namespace
+      name: mempass
