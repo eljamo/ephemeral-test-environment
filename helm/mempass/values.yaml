@@ -46,18 +46,19 @@ service:
 ingress:
   enabled: true
   className: ""
-  annotations:
-    nginx.ingress.kubernetes.io/ingress.class: nginx
+  annotations: {}
   spec:
     rules:
       - host: override-this-url-using-set-flag-in-helm-cli.com
         http:
           paths:
             - path: /
-              pathType: ImplementationSpecific
+              pathType: Prefix
               backend:
-                serviceName: mempass
-                servicePort: 4321
+                service:
+                  name: mempass
+                  port:
+                    number: 4321
   tls: []
 
 resources:
