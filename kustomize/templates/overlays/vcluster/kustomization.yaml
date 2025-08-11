@@ -11,5 +11,5 @@ images:
     newTag: latest
 
 # Patch the ingress host
-patchesStrategicMerge:
+patches:
   - ingress-host-patch.yaml

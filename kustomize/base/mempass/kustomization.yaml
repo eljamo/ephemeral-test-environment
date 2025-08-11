@@ -7,14 +7,9 @@ resources:
   - service.yaml
   - ingress.yaml
 
-commonLabels:
-  app: mempass
-  component: web
-
 images:
   - name: ghcr.io/eljamo/mempass-api
     newTag: latest
 
 # Enable patching for image tags and ingress host
-patchesStrategicMerge: []
-patchesJson6902: []
+patches: []
