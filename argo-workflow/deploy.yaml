@@ -95,7 +95,7 @@ spec:
         volumeMounts:
           - mountPath: /work
             name: work
-        workingDir: /work/{{inputs.parameters.vcluster-conf-path}}
+        workingDir: /work/{{inputs.parameters.vcluster-path}}
         command:
           - vcluster
         args:
