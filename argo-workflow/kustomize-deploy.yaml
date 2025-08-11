@@ -129,8 +129,9 @@ spec:
           - --namespace
           - "{{workflow.parameters.deployment-name}}"
           - --
-          - export DEPLOYMENT_NAME="{{workflow.parameters.deployment-name}}"
-          - kustomize build ./ | envsubst | kubectl apply -f -
-          - --namespace
-          - "{{inputs.parameters.name}}"
-          - --create-namespace
+          - sh
+          - -c
+          - |
+            export DEPLOYMENT_NAME="{{workflow.parameters.deployment-name}}"
+            kubectl create namespace "{{inputs.parameters.name}}"
+            kustomize build ./ | envsubst | kubectl apply -f - --namespace "{{inputs.parameters.name}}"
