@@ -46,6 +46,8 @@ spec:
               parameters:
                 - name: name
                   value: "{{workflow.parameters.deployment-name}}"
+                - name: vcluster-path
+                  value: "{{workflow.parameters.vcluster-path}}"
           - name: install-helm-chart
             template: tmpl-deploy
             depends: "clone-repo && create-vcluster"
