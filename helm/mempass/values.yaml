@@ -13,7 +13,7 @@ image:
 imagePullSecrets:
   - name: regcred
 nameOverride: ""
-fullnameOverride: ""
+fullnameOverride: "mempass"
 
 serviceAccount:
   # Specifies whether a service account should be created
