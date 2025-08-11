@@ -133,4 +133,4 @@ spec:
           - -c
           - |
             kubectl create namespace "{{inputs.parameters.name}}"
-            kubectl kustomize --env DEPLOYMENT_NAME="{{workflow.parameters.deployment-name}}" ./ | kubectl apply -f - --namespace "{{inputs.parameters.name}}"
+            kubectl kustomize --env DEPLOYMENT_NAME="{{workflow.parameters.deployment-name}}" ./ | kubectl apply -f - --namespace "{{workflow.parameters.deployment-name}}"
