@@ -18,7 +18,6 @@ spec:
       - name: deployment-name
         value: deployment-name
   entrypoint: main
-  # We use a volume claim template so that we can have a shared workspace.
   volumeClaimTemplates:
     - metadata:
         name: work
@@ -134,7 +133,6 @@ spec:
         args:
           - -c
           - |
-            # Create or update the configmap with DEPLOYMENT_NAME
             kustomize edit set configmap deployment-config --from-literal=DEPLOYMENT_NAME="{{inputs.parameters.name}}"
     - name: tmpl-deploy
       inputs:
