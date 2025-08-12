@@ -22,7 +22,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main
 
 ## 3. Add argo-workflows to cluster
 
-Kind of annoying we need to use helm here instead of the `kubectl` but seems like `helm` install has some magic sauce which just works versus. the normal install so adds a `helm` dependency until I can figure it out.
+Kind of annoying we need to use helm here instead of the `kubectl` but seems like `helm` install has some magic sauce which just works versus. `kubectl apply` install so adds a `helm` dependency until I can figure it out.
 
 ```
 helm install argo-workflows argo/argo-workflows -n argo --create-namespace

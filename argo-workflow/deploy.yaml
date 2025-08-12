@@ -9,16 +9,15 @@ spec:
         value: eljamo/ephemeral-test-environment.git
       - name: branch
         value: main
-      - name: path-chart
-        value: helm/mempass
-      - name: vcluster-path
+      - name: path-kustomize
+        value: kustomize/overlays/vcluster
+      - name: path-vcluster
         value: vcluster
       - name: image
         value: ghcr.io/eljamo/mempass:latest
       - name: deployment-name
         value: deployment-name
   entrypoint: main
-  # We use a volume claim template so that we can have a shared workspace.
   volumeClaimTemplates:
     - metadata:
         name: work
@@ -46,17 +45,26 @@ spec:
               parameters:
                 - name: name
                   value: "{{workflow.parameters.deployment-name}}"
-                - name: vcluster-path
-                  value: "{{workflow.parameters.vcluster-path}}"
-          - name: install-helm-chart
-            template: tmpl-deploy
+                - name: path-vcluster
+                  value: "{{workflow.parameters.path-vcluster}}"
+          - name: configure-deployment
+            template: tmpl-configure-deploy
             depends: "clone-repo && create-vcluster"
             arguments:
               parameters:
                 - name: name
                   value: "{{workflow.parameters.deployment-name}}"
-                - name: path-chart
-                  value: "{{workflow.parameters.path-chart}}"
+                - name: path-kustomize
+                  value: "{{workflow.parameters.path-kustomize}}"
+          - name: deploy-application
+            template: tmpl-deploy
+            depends: "clone-repo && create-vcluster && configure-deployment"
+            arguments:
+              parameters:
+                - name: name
+                  value: "{{workflow.parameters.deployment-name}}"
+                - name: path-kustomize
+                  value: "{{workflow.parameters.path-kustomize}}"
                 - name: image
                   value: "{{workflow.parameters.image}}"
     - name: tmpl-clone
@@ -92,13 +100,13 @@ spec:
       inputs:
         parameters:
           - name: name
-          - name: vcluster-path
+          - name: path-vcluster
       container:
         image: ghcr.io/loft-sh/vcluster-cli:0.23
         volumeMounts:
           - mountPath: /work
             name: work
-        workingDir: /work/{{inputs.parameters.vcluster-path}}
+        workingDir: /work/{{inputs.parameters.path-vcluster}}
         command:
           - vcluster
         args:
@@ -109,18 +117,35 @@ spec:
           - --namespace
           - "{{workflow.parameters.deployment-name}}"
           - --connect=false
+    - name: tmpl-configure-deploy
+      inputs:
+        parameters:
+          - name: name
+          - name: path-kustomize
+      container:
+        image: registry.k8s.io/kustomize/kustomize:v5.7.1
+        volumeMounts:
+          - mountPath: /work
+            name: work
+        workingDir: /work/{{inputs.parameters.path-kustomize}}
+        command:
+          - sh
+        args:
+          - -c
+          - |
+            kustomize edit set configmap deployment-config --from-literal=DEPLOYMENT_NAME="{{inputs.parameters.name}}"
     - name: tmpl-deploy
       inputs:
         parameters:
           - name: name
-          - name: path-chart
+          - name: path-kustomize
           - name: image
       container:
         image: ghcr.io/loft-sh/vcluster-cli:0.23
         volumeMounts:
           - mountPath: /work
             name: work
-        workingDir: /work/{{inputs.parameters.path-chart}}
+        workingDir: /work/{{inputs.parameters.path-kustomize}}
         command:
           - vcluster
         args:
@@ -129,13 +154,8 @@ spec:
           - --namespace
           - "{{workflow.parameters.deployment-name}}"
           - --
-          - helm
-          - upgrade
-          - --install
-          - "{{inputs.parameters.name}}"
-          - ./ # never change this to just a . it doesn't work
-          - --set
-          - ingress.hosts[0].host=mempass.{{workflow.parameters.deployment-name}}.ephemeralclusters.com
-          - --namespace
-          - "{{inputs.parameters.name}}"
-          - --create-namespace
+          - sh
+          - -c
+          - |
+            kubectl create namespace "{{inputs.parameters.name}}"
+            kubectl kustomize ./ | kubectl apply -f - --namespace "{{workflow.parameters.deployment-name}}"
