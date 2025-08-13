@@ -1,1 +1,1 @@
-# Ephemeral test environments for CI workflows
+# Ephemeral environments using Argo Workflows
