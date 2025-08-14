@@ -25,7 +25,7 @@ helm repo add argo https://argoproj.github.io/argo-helm
 ### 4. Setup cluster if it doesn't exist and start local environment
 
 ```
-bash ./local/kind/run.sh
+sudo bash ./local/kind/run.sh
 ```
 
 ## Updates

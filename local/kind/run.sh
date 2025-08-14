@@ -11,16 +11,9 @@ fi
 
 # cloud-provider-kind pid
 CPK_PID=""
-# sudo keep-alive pid
-SUDO_KEEPALIVE_PID=""
 
 # Function to cleanup on exit
 cleanup() {
-    # Stop sudo keep-alive
-    if [ -n "$SUDO_KEEPALIVE_PID" ] && ps -p $SUDO_KEEPALIVE_PID > /dev/null 2>&1; then
-        kill $SUDO_KEEPALIVE_PID 2>/dev/null
-    fi
-
     if [ -n "$CPK_PID" ] && ps -p $CPK_PID > /dev/null 2>&1; then
         echo ""
         echo "Stopping cloud-provider-kind..."
@@ -55,7 +48,6 @@ printf "Starting devenv"
 
 # Start the background processes
 sudo_keepalive &
-SUDO_KEEPALIVE_PID=$!
 
 sudo cloud-provider-kind > /dev/null 2>&1 &
 CPK_PID=$!
@@ -76,11 +68,11 @@ while ! curl -s http://localhost:2746 > /dev/null 2>&1; do
 done
 
 echo ""
+echo ""
 echo "========================================="
 echo "Devenv Details:"
 echo "========================================="
 printf "%-30s %s\n" "cloud-provider-kind PID:" "$CPK_PID"
-printf "%-30s %s\n" "sudo keep-alive PID:" "$SUDO_KEEPALIVE_PID"
 echo ""
 
 docker ps --format "{{.Names}}" | while read CONTAINER; do
@@ -115,11 +107,5 @@ while true; do
         echo ""
         echo "cloud-provider-kind has been stopped"
         exit 1
-    fi
-
-    # Check if sudo keep-alive is still running
-    if ! ps -p $SUDO_KEEPALIVE_PID > /dev/null 2>&1; then
-        echo ""
-        echo "sudo keep-alive has been stopped"
     fi
 done
