@@ -33,29 +33,29 @@ cleanup() {
 # Set up trap for cleanup on exit
 trap cleanup EXIT INT TERM
 
-# Stage 1: Handle sudo authentication
+# Handle sudo authentication
 sudo -v || { echo "Authentication failed"; exit 1; }
 
-# Stage 2: Start the background processes
+# Start the background processes
 sudo cloud-provider-kind > /dev/null 2>&1 &
 CPK_PID=$!
 
 kubectl -n argo port-forward deployment.apps/argo-workflows-server 2746:2746 > /dev/null 2>&1 &
 
-# Wait and verify with spinner
 printf "Starting devenv"
-for i in {1..5}; do
-    printf "."
-    sleep 1
-done
-echo ""
 
+# Check if cloud-provider-kind is running
 if ! ps -p $CPK_PID > /dev/null; then
+    echo ""
     echo "Error: cloud-provider-kind failed to start"
     exit 1
 fi
 
-sleep 2
+# Wait for Argo to be accessible
+while ! curl -s http://localhost:2746 > /dev/null 2>&1; do
+    printf "."
+    sleep 1
+done
 
 echo ""
 echo "========================================="
