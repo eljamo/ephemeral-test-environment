@@ -77,7 +77,7 @@ done
 
 echo ""
 echo "========================================="
-echo "Devenv Details"
+echo "Devenv Details:"
 echo "========================================="
 printf "%-30s %s\n" "cloud-provider-kind PID:" "$CPK_PID"
 printf "%-30s %s\n" "sudo keep-alive PID:" "$SUDO_KEEPALIVE_PID"
@@ -106,7 +106,8 @@ printf "%-30s %s\n" "argo-workflows login JWT:" "$(${SCRIPT_DIR}/get-argo-token.
 echo ""
 echo "========================================="
 echo "Options:"
-echo "  - Press Ctrl+C to exit"
+echo "========================================="
+echo "  * Press Ctrl+C to exit"
 
 while true; do
     # Check if background processes are still running
@@ -119,9 +120,6 @@ while true; do
     # Check if sudo keep-alive is still running
     if ! ps -p $SUDO_KEEPALIVE_PID > /dev/null 2>&1; then
         echo ""
-        echo "Warning: sudo keep-alive stopped"
-        # Restart it
-        sudo_keepalive &
-        SUDO_KEEPALIVE_PID=$!
+        echo "sudo keep-alive has been stopped"
     fi
 done
