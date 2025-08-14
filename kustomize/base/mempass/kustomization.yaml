@@ -11,5 +11,4 @@ images:
   - name: ghcr.io/eljamo/mempass-api
     newTag: latest
 
-# Enable patching for image tags and ingress host
 patches: []

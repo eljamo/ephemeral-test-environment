@@ -1,42 +1,41 @@
 #!/usr/bin/env bash
 
-echo "Creating new kind cluster"
-echo ""
+# Get the directory of the current script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-kind create cluster --name dev --config ./config.yaml
-
-echo ""
-echo "Installing Ingress NGINX"
-echo ""
-
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+kind create cluster --name devenv --config "${SCRIPT_DIR}/config.yaml"
 
 echo ""
+printf "Installing ingress-nginx"
 
-until kubectl get pods -n ingress-nginx -l app.kubernetes.io/component=controller 2>/dev/null | grep -q .; do
-  sleep 2
-done
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml > /dev/null
 
-kubectl wait --namespace ingress-nginx \
+while ! kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \
   --selector=app.kubernetes.io/component=controller \
-  --timeout=90s
+  --timeout=2s > /dev/null 2>&1; do
+  printf "."
+  sleep 1
+done
 
 echo ""
-echo "Installng argo-workflows"
-echo ""
+printf "Installing argo-workflows"
 
-helm install argo-workflows argo/argo-workflows -n argo --create-namespace --wait
+helm install argo-workflows argo/argo-workflows -n argo --create-namespace --wait > /dev/null 2>&1 &
+HELM_PID=$!
+
+while ps -p $HELM_PID > /dev/null 2>&1; do
+  printf "."
+  sleep 1
+done
+
+wait $HELM_PID
 
 echo ""
-echo "Creating roles for service accounts"
-echo ""
+printf "Creating roles for service accounts"
 
-kubectl create clusterrolebinding argo-admin-server --clusterrole=cluster-admin --serviceaccount=argo:argo-server -n argo
-kubectl create clusterrolebinding argo-admin-default --clusterrole=cluster-admin --serviceaccount=argo:default -n argo
+kubectl create clusterrolebinding argo-admin-server --clusterrole=cluster-admin --serviceaccount=argo:argo-server -n argo > /dev/null
+kubectl create clusterrolebinding argo-admin-default --clusterrole=cluster-admin --serviceaccount=argo:default -n argo > /dev/null
 
+printf "."
 echo ""
-echo "Fetching argo auth token"
-echo ""
-
-echo "$(./get-argo-token.sh -n argo 2>/dev/null)"

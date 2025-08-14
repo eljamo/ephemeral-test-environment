@@ -3,10 +3,13 @@ kind: Ingress
 metadata:
   name: argo-workflows-ingress
   namespace: argo
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
 spec:
   ingressClassName: nginx
   rules:
-    - host: argo-workflows.kubernetes.local
+    - host: argo-workflows.devenv.test
       http:
         paths:
           - path: /
