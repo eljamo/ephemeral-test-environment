@@ -32,6 +32,14 @@ done
 wait $HELM_PID
 
 echo ""
+printf "Adding workflows to argo-workflows"
+
+kubectl apply -n argo -f ./argo/workflows/destroy.yaml
+kubectl apply -n argo -f ./argo/workflows/deploy.yaml
+
+printf "."
+
+echo ""
 printf "Creating roles for service accounts"
 
 kubectl create clusterrolebinding argo-admin-server --clusterrole=cluster-admin --serviceaccount=argo:argo-server -n argo > /dev/null
