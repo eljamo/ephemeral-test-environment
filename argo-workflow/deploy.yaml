@@ -76,14 +76,12 @@ spec:
         image: alpine/git:v2.26.2
         workingDir: /work
         env:
-          - name: BUILDKITD_FLAGS
-            value: --oci-worker-no-process-sandbox
-          - name: GH_TOKEN # name of env var
+          - name: GITHUB_CLONE_TOKEN
             valueFrom:
               secretKeyRef:
-                name: github-token # name of an existing k8s secret
+                name: github-clone-token
                 namespace: argo
-                key: token
+                key: value
         args:
           - clone
           - --depth
