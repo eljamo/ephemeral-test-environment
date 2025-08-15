@@ -23,8 +23,8 @@ sudo sed -i '' '/# Added by Devenv/,/# End of section/d' /etc/hosts
 # Add new section
 {
     echo "# Added by Devenv"
-    echo "$HOSTS" | while read -r host; do
-        echo "$IP $host"
+    echo "$HOSTS" | while read -r HOST; do
+        echo "$IP $HOST"
     done
     echo "# End of section"
 } | sudo tee -a /etc/hosts > /dev/null
