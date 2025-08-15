@@ -16,16 +16,9 @@ fi
 
 # cloud-provider-kind pid
 CPK_PID=""
-# sudo keep-alive pid
-SUDO_KEEPALIVE_PID=""
 
 # Function to cleanup on exit
 cleanup() {
-    # Stop sudo keep-alive
-    if [ -n "$SUDO_KEEPALIVE_PID" ] && ps -p $SUDO_KEEPALIVE_PID > /dev/null 2>&1; then
-        kill $SUDO_KEEPALIVE_PID 2>/dev/null
-    fi
-
     if [ -n "$CPK_PID" ] && ps -p $CPK_PID > /dev/null 2>&1; then
         echo ""
         echo "Stopping cloud-provider-kind..."
@@ -63,7 +56,6 @@ sudo cloud-provider-kind > /dev/null 2>&1 &
 CPK_PID=$!
 
 sudo_keepalive &
-SUDO_KEEPALIVE_PID=$!
 
 kubectl -n argo port-forward deployment.apps/argo-workflows-server 2746:2746 > /dev/null 2>&1 &
 
@@ -81,15 +73,11 @@ while ! curl -s http://localhost:2746 > /dev/null 2>&1; do
 done
 
 echo ""
-
-sleep 2
-
 echo ""
 echo "========================================="
 echo "Devenv Details:"
 echo "========================================="
 printf "%-30s %s\n" "cloud-provider-kind PID:" "$CPK_PID"
-printf "%-30s %s\n" "sudo keep-alive PID:" "$SUDO_KEEPALIVE_PID"
 echo ""
 
 (kubectl get services --all-namespaces -o json | jq -r '.items[] | select(.status.loadBalancer.ingress[0].ip != null) | "\(.metadata.name) \(.status.loadBalancer.ingress[0].ip)"'; kubectl get services --all-namespaces -o json | jq -r '.items[] | select(.spec.externalIPs[0] != null) | "\(.metadata.name) \(.spec.externalIPs[0])"') | while read SERVICE IP; do printf "%-30s %s\n" "${SERVICE} IP:" "${IP}"; done
@@ -111,12 +99,6 @@ while true; do
         echo ""
         echo "cloud-provider-kind has been stopped"
         exit 1
-    fi
-
-    # Check if sudo keep-alive is still running
-    if ! ps -p $SUDO_KEEPALIVE_PID > /dev/null 2>&1; then
-        echo ""
-        echo "sudo keep-alive has been stopped"
     fi
 
     # Update hosts file (will only print if it actually updates)
