@@ -23,7 +23,7 @@ spec:
         parameters:
           - name: name
       container:
-        image: ghcr.io/loft-sh/vcluster-cli:0.19
+        image: ghcr.io/loft-sh/vcluster-cli:0.27
         command:
           - vcluster
         args:

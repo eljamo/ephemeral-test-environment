@@ -21,7 +21,7 @@ patches:
   - path: ingress-host-patch.yaml
     target:
       kind: Ingress
-      name: mempass-ingress
+      name: ingress-mempass
   - path: namespace-patch.yaml
     target:
       kind: Namespace
@@ -49,4 +49,4 @@ replacements:
           index: 1
         select:
           kind: Ingress
-          name: mempass-ingress
+          name: ingress-mempass
