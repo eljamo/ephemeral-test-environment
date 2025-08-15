@@ -46,8 +46,18 @@ sudo_keepalive() {
 # Set up trap for cleanup on exit
 trap cleanup EXIT INT TERM
 
-# Handle sudo authentication
-sudo -v || { echo "Authentication failed"; exit 1; }
+EXPECTED_CONTEXT="kind-devenv"
+CURRENT_CONTEXT=$(kubectl config current-context 2>/dev/null)
+
+if [ "$CURRENT_CONTEXT" != "$EXPECTED_CONTEXT" ]; then
+    echo "Error: Wrong Kubernetes context!"
+    echo "  Expected: $EXPECTED_CONTEXT"
+    echo "  Current:  $CURRENT_CONTEXT"
+    echo ""
+    echo "Switch to the correct context using:"
+    echo "  kubectl config use-context $EXPECTED_CONTEXT"
+    exit 1
+fi
 
 printf "Starting devenv"
 
